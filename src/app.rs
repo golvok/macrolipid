@@ -1,16 +1,25 @@
-use opengl_graphics::GlGraphics;
+use opengl_graphics::{GlGraphics, OpenGL};
 use piston::input::{RenderArgs, UpdateArgs};
+
 use std::sync::mpsc;
 
 use crate::types::*;
 
 pub struct App {
-    pub gl: GlGraphics,
-    pub rx: mpsc::Receiver<MoleculeEnum>,
-    pub molecules: Vec<MoleculeEnum>,
+    gl: GlGraphics,
+    rx: mpsc::Receiver<MoleculeEnum>,
+    molecules: Vec<MoleculeEnum>,
 }
 
 impl App {
+    pub fn new(rx: mpsc::Receiver<MoleculeEnum>) -> Self {
+        Self {
+            gl: GlGraphics::new(OpenGL::V3_2),
+            rx: rx,
+            molecules: vec![],
+        }
+    }
+
     pub fn render(&mut self, args: &RenderArgs) {
         use graphics::*;
 

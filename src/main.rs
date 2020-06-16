@@ -1,5 +1,5 @@
 use glutin_window::GlutinWindow;
-use opengl_graphics::{GlGraphics, OpenGL};
+
 use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderEvent, UpdateEvent};
 use piston::window::WindowSettings;
@@ -12,10 +12,7 @@ mod types;
 use types::*;
 
 fn main() {
-    let opengl = OpenGL::V3_2;
-
     let mut window: GlutinWindow = WindowSettings::new("Macrolipid", [400, 400])
-        .graphics_api(opengl)
         .exit_on_esc(true)
         .build()
         .unwrap();
@@ -34,11 +31,7 @@ fn main() {
         }
     });
 
-    let mut app = app::App {
-        gl: GlGraphics::new(opengl),
-        rx: rx,
-        molecules: vec![],
-    };
+    let mut app = app::App::new(rx);
 
     let mut events = Events::new(EventSettings::new());
     while let Some(e) = events.next(&mut window) {
