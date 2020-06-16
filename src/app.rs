@@ -1,22 +1,18 @@
 use opengl_graphics::{GlGraphics, OpenGL};
 use piston::input::{RenderArgs, UpdateArgs};
 
-use std::sync::mpsc;
-
 use crate::types::*;
 
 pub struct App {
     gl: GlGraphics,
-    rx: mpsc::Receiver<MoleculeEnum>,
-    molecules: Vec<MoleculeEnum>,
+    state: State,
 }
 
 impl App {
-    pub fn new(rx: mpsc::Receiver<MoleculeEnum>) -> Self {
+    pub fn new() -> Self {
         Self {
             gl: GlGraphics::new(OpenGL::V3_2),
-            rx: rx,
-            molecules: vec![],
+            state: State::new(),
         }
     }
 
@@ -29,18 +25,18 @@ impl App {
         const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 
         let (_xmax, _ymax) = (args.window_size[0], args.window_size[1]);
-        let molecules = &self.molecules;
+        let state = &self.state;
 
         self.gl.draw(args.viewport(), |c, gl| {
             clear(BLACK, gl);
 
-            for m in molecules {
+            for m in &state.lipids {
                 match m {
-                    MoleculeEnum::Lipid(Lipid {
+                    Lipid {
                         head_position,
                         tail_position,
                         head_radius,
-                    }) => {
+                    } => {
                         line(
                             GREEN,
                             1.0,
@@ -64,11 +60,9 @@ impl App {
         });
     }
 
-    pub fn update(&mut self, _args: &UpdateArgs) {
-        // get data from queue, if any & update member
-        match self.rx.try_recv() {
-            Ok(molecule) => self.molecules.push(molecule),
-            Result::Err(_err) => {}
-        }
+    pub fn new_data(&mut self, state: State) {
+        self.state = state;
     }
+
+    pub fn update(&mut self, _args: &UpdateArgs) {}
 }

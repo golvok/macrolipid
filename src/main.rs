@@ -1,5 +1,4 @@
 use glutin_window::GlutinWindow;
-
 use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderEvent, UpdateEvent};
 use piston::window::WindowSettings;
@@ -17,26 +16,32 @@ fn main() {
         .build()
         .unwrap();
 
-    let (tx, rx) = mpsc::channel::<MoleculeEnum>();
+    let (tx, rx) = mpsc::channel::<State>();
     thread::spawn(move || {
         for i_int in 1..10 {
             let i: f32 = i_int as f32;
-            tx.send(MoleculeEnum::Lipid(Lipid {
-                head_position: (20. * i, 20. * i),
-                tail_position: (20. * i + 5., 20. * i + 5.),
-                head_radius: 2.,
-            }))
+            tx.send(State {
+                lipids: vec![Lipid {
+                    head_position: (20. * i, 20. * i),
+                    tail_position: (20. * i + 5., 20. * i + 5.),
+                    head_radius: 2.,
+                }],
+            })
             .unwrap();
             thread::sleep(time::Duration::from_millis(200))
         }
     });
 
-    let mut app = app::App::new(rx);
+    let mut app = app::App::new();
 
     let mut events = Events::new(EventSettings::new());
     while let Some(e) = events.next(&mut window) {
         if let Some(args) = e.render_args() {
             app.render(&args);
+        }
+
+        if let Ok(state) = rx.try_recv() {
+            app.new_data(state)
         }
 
         if let Some(args) = e.update_args() {
