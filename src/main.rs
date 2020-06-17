@@ -4,9 +4,10 @@ use piston::input::{RenderEvent, UpdateEvent};
 use piston::window::WindowSettings;
 use std::sync::mpsc;
 use std::thread;
-use std::time;
 
 mod app;
+mod engine;
+mod initialization;
 mod types;
 use types::*;
 
@@ -18,17 +19,18 @@ fn main() {
 
     let (tx, rx) = mpsc::sync_channel::<State>(1);
     thread::spawn(move || {
-        for i_int in 1..10 {
-            let i: f32 = i_int as f32;
-            tx.try_send(State {
-                lipids: vec![Lipid {
-                    head_position: (20. * i, 20. * i),
-                    tail_position: (20. * i + 5., 20. * i + 5.),
-                    head_radius: 2.,
-                }],
-            })
-            .ok();
-            thread::sleep(time::Duration::from_millis(200))
+        let mut e = engine::Engine::new(initialization::default());
+        let mut tpf = 0;
+        for _ in 1..1000 {
+            e.tick();
+            if tpf > 10 {
+                tx.send(e.current_state()).ok();
+                tpf = 0;
+            } else {
+                if let Err(_) = tx.try_send(e.current_state()) {
+                    tpf += 1;
+                }
+            }
         }
     });
 
