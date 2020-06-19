@@ -5,7 +5,9 @@ authors = ["Matthew J. P. Walker <walkerm930@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+cgmath = "0.17.0"
 piston = "0.50.0"
 piston2d-graphics = "0.36.0"
-pistoncore-glutin_window = "0.64.0"
 piston2d-opengl_graphics = "0.72.0"
+pistoncore-glutin_window = "0.64.0"
+rand = "0.6"

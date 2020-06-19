@@ -1,7 +1,9 @@
+use cgmath::*;
+
 #[derive(Debug, Copy, Clone)]
 pub struct Lipid {
-    pub head_position: (f32, f32),
-    pub tail_position: (f32, f32),
+    pub head_position: Point2<f32>,
+    pub tail_position: Point2<f32>,
     pub head_radius: f32,
 }
 

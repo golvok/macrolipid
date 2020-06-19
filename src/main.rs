@@ -21,14 +21,15 @@ fn main() {
     thread::spawn(move || {
         let mut e = engine::Engine::new(initialization::default());
         let mut tpf = 0;
-        for _ in 1..1000 {
+        for _ in 1..1000000 {
             e.tick();
-            if tpf > 10 {
+            tpf += 1;
+            if tpf >= 10 {
                 tx.send(e.current_state()).ok();
                 tpf = 0;
             } else {
-                if let Err(_) = tx.try_send(e.current_state()) {
-                    tpf += 1;
+                if let Ok(_) = tx.try_send(e.current_state()) {
+                    tpf = 0;
                 }
             }
         }

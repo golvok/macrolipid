@@ -40,17 +40,17 @@ impl App {
                             GREEN,
                             1.0,
                             [
-                                head_position.0.into(),
-                                head_position.1.into(),
-                                tail_position.0.into(),
-                                tail_position.1.into(),
+                                head_position.x.into(),
+                                head_position.y.into(),
+                                tail_position.x.into(),
+                                tail_position.y.into(),
                             ],
                             c.transform,
                             gl,
                         );
                         let transform = c
                             .transform
-                            .trans(head_position.0.into(), head_position.1.into());
+                            .trans(head_position.x.into(), head_position.y.into());
                         let square = rectangle::square(0.0, 0.0, *head_radius as f64);
                         rectangle(RED, square, transform, gl);
                     }
