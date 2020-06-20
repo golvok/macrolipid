@@ -31,13 +31,15 @@ impl Engine {
                 }
 
                 let head_distance2 = jl.head_position.distance2(l.head_position);
-                if 0.1 < head_distance2 && head_distance2 < 3.0 * 3.0 {
-                    head_force -= (jl.head_position - l.head_position) / head_distance2;
+                let head_error2 = head_distance2 - 1.0;
+                if head_distance2 < 3_f32.powf(2.0) && head_error2.abs() > 0.1 {
+                    head_force += 1.0 * (jl.head_position - l.head_position) / head_error2;
                 }
 
                 let tail_distance2 = jl.tail_position.distance2(l.tail_position);
-                if 0.1 < tail_distance2 && tail_distance2 < 3.0 * 3.0 {
-                    tail_force -= (jl.tail_position - l.tail_position) / tail_distance2;
+                let tail_error2 = tail_distance2 - 1.0;
+                if tail_distance2 < 3_f32.powf(2.0) && tail_error2.abs() > 0.1 {
+                    tail_force += 1.0 * (jl.tail_position - l.tail_position) / tail_error2;
                 }
             }
 
@@ -46,8 +48,8 @@ impl Engine {
             if head_tail_error2.abs() > 0.1 {
                 let tail_to_head_unit = (l.tail_position - l.head_position) * head_tail_error2;
                 let abc = tail_to_head_unit / head_tail_distance2;
-                head_force = 0.1 * abc;
-                tail_force = 0.1 * -abc;
+                head_force += 0.1 * abc;
+                tail_force += 0.1 * -abc;
             }
 
             let brownian_force = Vector {

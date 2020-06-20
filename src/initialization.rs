@@ -5,11 +5,12 @@ pub fn default() -> State {
     for i in 0..1000 {
         let x = (i % 100) as f32;
         let y = (i / 100) as f32;
+        let flip = if i % 2 == 0 { -1. } else { 1. };
         result.lipids.push(Lipid {
             head_position: (100.0 + 6.0 * x, 100.0 + 6.0 * y).into(),
-            tail_position: (105.0 + 6.0 * x, 105.0 + 6.0 * y).into(),
+            tail_position: (100.0 + flip * 5.0 + 6.0 * x, 100.0 + flip * 5.0 + 6.0 * y).into(),
             head_radius: 2.,
-            tail_length: 5.,
+            tail_length: 10.,
         })
     }
 
