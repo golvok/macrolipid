@@ -35,6 +35,7 @@ impl App {
                         head_position,
                         tail_position,
                         head_radius,
+                        tail_length: _,
                     } => {
                         line(
                             GREEN,

@@ -9,6 +9,7 @@ pub fn default() -> State {
             head_position: (100.0 + 6.0 * x, 100.0 + 6.0 * y).into(),
             tail_position: (105.0 + 6.0 * x, 105.0 + 6.0 * y).into(),
             head_radius: 2.,
+            tail_length: 5.,
         })
     }
 
