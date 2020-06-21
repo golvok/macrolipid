@@ -4,6 +4,7 @@ pub use cgmath::Vector2;
 
 pub type Point = Point2<f32>;
 pub type Vector = Vector2<f32>;
+pub type VectorU = Vector2<usize>;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Lipid {
