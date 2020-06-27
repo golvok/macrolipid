@@ -1,6 +1,5 @@
 use crate::types::*;
-use ndarray::arr2;
-use ndarray::Array2;
+
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 
@@ -9,11 +8,7 @@ pub struct Engine {
     curr: State,
     rng: SmallRng,
     bounds: (Point, Point),
-    water_densitiy: Array2<f32>,
-    head_water_kernel: Array2<f32>,
 }
-
-const GRID_SUBDIV: usize = 4;
 
 impl Engine {
     pub fn new(initial_state: State) -> Self {
@@ -22,31 +17,11 @@ impl Engine {
             curr: initial_state,
             rng: SmallRng::from_seed([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]),
             bounds: ((0., 0.).into(), (800., 800.).into()),
-            water_densitiy: Array2::<f32>::ones((800 * GRID_SUBDIV, 800 * GRID_SUBDIV)),
-            head_water_kernel: arr2(&[[1.00, 1.05, 1.00], [1.05, 1.10, 1.05], [1.00, 1.05, 1.00]]),
         }
     }
 
     pub fn tick(&mut self) {
         self.prev = self.curr.clone();
-        self.water_densitiy.fill(1.0);
-
-        for l in self.curr.lipids.iter() {
-            let head_pos_in_water = (l.head_position * GRID_SUBDIV as f32)
-                .cast::<usize>()
-                .unwrap();
-            let kshape = VectorU::from(self.head_water_kernel.dim()) * GRID_SUBDIV;
-            let mut head_slice = self.water_densitiy.slice_mut(ndarray::s![
-                head_pos_in_water.x - kshape.x..head_pos_in_water.x + kshape.x,
-                head_pos_in_water.y - kshape.x..head_pos_in_water.y + kshape.x,
-            ]);
-            for x in 0..kshape.x {
-                for y in 0..kshape.x {
-                    head_slice[[x, y]] *=
-                        self.head_water_kernel[[x / GRID_SUBDIV, y / GRID_SUBDIV]];
-                }
-            }
-        }
 
         for (ilipid, l) in self.curr.lipids.iter_mut().enumerate() {
             let mut tail_force = Vector { x: 0., y: 0. };
