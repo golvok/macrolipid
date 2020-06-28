@@ -32,15 +32,26 @@ impl Engine {
                 }
 
                 let head_distance2 = jl.head_position.distance2(l.head_position);
-                let head_error2 = head_distance2 - 1.0;
-                if head_distance2 < 3_f32.powf(2.0) && head_error2.abs() > 0.1 {
-                    head_force += 1.0 * (jl.head_position - l.head_position) / head_error2;
+                let head_error2 = head_distance2 - (l.head_radius + jl.head_radius).powf(2.0);
+                if head_error2 < 3_f32.powf(2.0) && head_error2.abs() > 0.5 {
+                    head_force += if head_error2 > 0.0 { 1.0 } else { 1.5 } / head_error2
+                        * (jl.head_position - l.head_position)
+                        / head_distance2.sqrt();
                 }
 
-                let tail_distance2 = jl.tail_position.distance2(l.tail_position);
-                let tail_error2 = tail_distance2 - 1.0;
-                if tail_distance2 < 3_f32.powf(2.0) && tail_error2.abs() > 0.1 {
-                    tail_force += 1.0 * (jl.tail_position - l.tail_position) / tail_error2;
+                let tail_points = [0.4, 0.7, 1.0];
+                for tail_distance1 in tail_points.iter() {
+                    let tpos_j =
+                        jl.head_position + (jl.tail_position - jl.head_position) * *tail_distance1;
+                    for tail_distance2 in tail_points.iter() {
+                        let tpos_i =
+                            l.head_position + (l.tail_position - l.head_position) * *tail_distance2;
+                        let tail_distance2 = tpos_j.distance2(tpos_i);
+                        let tail_error2 = tail_distance2 - 1.0;
+                        if tail_distance2 < 3_f32.powf(2.0) && tail_error2.abs() > 0.5 {
+                            tail_force += 0.33 * (tpos_j - tpos_i) / tail_error2;
+                        }
+                    }
                 }
             }
 
@@ -54,11 +65,11 @@ impl Engine {
             }
 
             let brownian_force = Vector {
-                x: self.rng.gen_range(-2., 2.),
-                y: self.rng.gen_range(-2., 2.),
+                x: self.rng.gen_range(-1., 1.),
+                y: self.rng.gen_range(-1., 1.),
             };
-            head_force += brownian_force;
-            tail_force += brownian_force;
+            head_force += brownian_force * 5.0;
+            tail_force += brownian_force * 5.0;
 
             *l = Lipid {
                 head_position: apply_force(self.bounds, l.head_position, head_force * 0.1),
