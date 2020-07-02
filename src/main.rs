@@ -12,10 +12,7 @@ mod types;
 use types::*;
 
 fn main() {
-    let mut window: GlutinWindow = WindowSettings::new("Macrolipid", [400, 400])
-        .exit_on_esc(true)
-        .build()
-        .unwrap();
+    let mut window: GlutinWindow = WindowSettings::new("Macrolipid", [400, 400]).exit_on_esc(true).build().unwrap();
 
     let (tx, rx) = mpsc::sync_channel::<State>(1);
     thread::spawn(move || {

@@ -87,11 +87,7 @@ impl Engine {
 
 pub fn apply_force(bounds: (Point, Point), p: Point, f: Vector) -> Point {
     let proposed = p + f;
-    if proposed.x > bounds.1.x
-        || proposed.y > bounds.1.y
-        || proposed.x < bounds.0.x
-        || proposed.y < bounds.0.y
-    {
+    if proposed.x > bounds.1.x || proposed.y > bounds.1.y || proposed.x < bounds.0.x || proposed.y < bounds.0.y {
         p
     } else {
         proposed

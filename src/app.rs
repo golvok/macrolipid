@@ -49,9 +49,7 @@ impl App {
                             c.transform,
                             gl,
                         );
-                        let transform = c
-                            .transform
-                            .trans(head_position.x.into(), head_position.y.into());
+                        let transform = c.transform.trans(head_position.x.into(), head_position.y.into());
                         let square = rectangle::square(0.0, 0.0, *head_radius as f64);
                         rectangle(RED, square, transform, gl);
                     }
