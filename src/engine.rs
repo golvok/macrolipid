@@ -1,4 +1,8 @@
 use crate::types::*;
+use cgmath::Basis2;
+use cgmath::Rad;
+use cgmath::Rotation;
+use cgmath::Rotation2;
 
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
@@ -24,8 +28,12 @@ impl Engine {
         self.prev = self.curr.clone();
 
         for (ilipid, l) in self.curr.lipids.iter_mut().enumerate() {
-            let mut tail_force = Vector { x: 0., y: 0. };
-            let mut head_force = Vector { x: 0., y: 0. };
+            let mut ext_force = Vector { x: 0., y: 0. };
+            let centre_of_mass = l.head_position + (l.tail_position - l.head_position) * 0.33;
+            let mut torque: f32 = 0.0; // (CCW is positive)
+
+            let min_sf_dist: f32 = 0.77;
+            let max_sf_dist: f32 = 5.0;
             for (jlipid, jl) in self.prev.lipids.iter().enumerate() {
                 if jlipid == ilipid {
                     continue;
@@ -33,43 +41,54 @@ impl Engine {
 
                 let head_distance2 = jl.head_position.distance2(l.head_position);
                 let head_error2 = head_distance2 - (l.head_radius + jl.head_radius).powf(2.0);
-                if head_error2 < 3_f32.powf(2.0) && head_error2.abs() > 0.5 {
-                    head_force += if head_error2 > 0.0 { 1.0 } else { 1.5 } / head_error2
-                        * (jl.head_position - l.head_position)
-                        / head_distance2.sqrt();
+                if head_error2 < max_sf_dist.powf(2.0) && head_error2.abs() > min_sf_dist.powf(2.0) {
+                    let coeff = if head_error2 > 0.0 { 1.0 } else { 1.5 };
+                    let force_here = coeff * (jl.head_position - l.head_position) / head_error2;
+                    let offset = centre_of_mass - l.head_position;
+                    ext_force += force_here;
+                    torque += offset.x * force_here.y - offset.y * force_here.x;
                 }
 
-                let tail_points = [0.4, 0.7, 1.0];
+                let tail_points = [0.33, 0.67, 1.0];
                 for tail_distance1 in tail_points.iter() {
-                    let tpos_j =
-                        jl.head_position + (jl.tail_position - jl.head_position) * *tail_distance1;
+                    let tpos_i = l.head_position + (l.tail_position - l.head_position) * *tail_distance1;
                     for tail_distance2 in tail_points.iter() {
-                        let tpos_i =
-                            l.head_position + (l.tail_position - l.head_position) * *tail_distance2;
+                        let tpos_j = jl.head_position + (jl.tail_position - jl.head_position) * *tail_distance2;
                         let tail_distance2 = tpos_j.distance2(tpos_i);
-                        let tail_error2 = tail_distance2 - 1.0;
-                        if tail_distance2 < 3_f32.powf(2.0) && tail_error2.abs() > 0.5 {
-                            tail_force += 0.33 * (tpos_j - tpos_i) / tail_error2;
+                        let tail_error2 = tail_distance2 - 2.0;
+                        if tail_distance2 < max_sf_dist.powf(2.0) && tail_error2.abs() > min_sf_dist.powf(2.0) {
+                            let force_here = 1. / tail_points.len() as f32 * (tpos_j - tpos_i) / tail_error2;
+                            let offset = centre_of_mass - tpos_i;
+                            ext_force += force_here;
+                            torque += offset.x * force_here.y - offset.y * force_here.x;
                         }
                     }
                 }
             }
 
-            let head_tail_distance2 = l.head_position.distance2(l.tail_position);
-            let head_tail_error2 = head_tail_distance2 - l.tail_length.powf(2.0);
-            if head_tail_error2.abs() > 0.1 {
-                let tail_to_head_unit = (l.tail_position - l.head_position) * head_tail_error2;
-                let abc = tail_to_head_unit / head_tail_distance2;
-                head_force += 0.1 * abc;
-                tail_force += 0.1 * -abc;
-            }
-
-            let brownian_force = Vector {
+            // random (~brownian) perturbations
+            ext_force += Vector {
                 x: self.rng.gen_range(-1., 1.),
                 y: self.rng.gen_range(-1., 1.),
+            } * 5.0;
+            torque += self.rng.gen_range(-1., 1.) * 0.5;
+
+            let head_tail_distance2 = l.head_position.distance2(l.tail_position);
+            let head_tail_error2 = head_tail_distance2 - l.tail_length.powf(2.0);
+            let head_tail_attraction = if head_tail_error2.abs() > 0.1 {
+                let tail_to_head_unit = (l.tail_position - l.head_position) * head_tail_error2;
+                tail_to_head_unit / head_tail_distance2
+            } else {
+                (0.0_f32, 0.0_f32).into()
             };
-            head_force += brownian_force * 5.0;
-            tail_force += brownian_force * 5.0;
+
+            let make_ccw_normal: Basis2<f32> = Rotation2::from_angle(Rad(0.5 * std::f32::consts::PI));
+            let head_normal = make_ccw_normal.rotate_vector(centre_of_mass - l.head_position);
+            let tail_normal = make_ccw_normal.rotate_vector(centre_of_mass - l.tail_position);
+
+            let mass = 0.1;
+            let head_force = (head_normal * torque * 0.1 + ext_force + head_tail_attraction) * mass;
+            let tail_force = (tail_normal * torque * 0.1 + ext_force - head_tail_attraction) * mass;
 
             *l = Lipid {
                 head_position: apply_force(self.bounds, l.head_position, head_force * 0.1),
