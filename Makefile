@@ -1,0 +1,2 @@
+dflt:
+	cargo run -r
