@@ -34,7 +34,7 @@ impl App {
                     Lipid {
                         head_position,
                         tail_position,
-                        head_radius,
+                        head_radius: _,
                         tail_length: _,
                     } => {
                         line(
@@ -49,6 +49,19 @@ impl App {
                             c.transform,
                             gl,
                         );
+                    }
+                }
+            }
+
+            // render heads after, since they are small
+            for m in &state.lipids {
+                match m {
+                    Lipid {
+                        head_position,
+                        tail_position: _,
+                        head_radius,
+                        tail_length: _,
+                    } => {
                         let transform = c.transform.trans(head_position.x.into(), head_position.y.into());
                         let square = rectangle::square(0.0, 0.0, *head_radius as f64);
                         rectangle(RED, square, transform, gl);

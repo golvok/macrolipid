@@ -7,8 +7,8 @@ use cgmath::Rotation2;
 pub fn default() -> State {
     let mut result = State { lipids: vec![] };
     for irow in 0..=1 {
-        for icol in 0..400 {
-            let centre = Point::new(100.0 + icol as f32 * 1.0, 100.0 + irow as f32 * 10.0);
+        for icol in 0..200 {
+            let centre = Point::new(100.0 + icol as f32 * 1.0, 100.0 + irow as f32 * 10.0 + (icol % 5) as f32 * 2.0);
             let tail_length = 10.0;
             let tail_vec_x = Vector::new(tail_length * 0.5, 0.0);
             let angle = if irow % 2 == 0 { 0.5 } else { 1.5 };
