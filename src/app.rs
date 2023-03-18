@@ -1,18 +1,22 @@
 use opengl_graphics::{GlGraphics, OpenGL};
 use piston::input::{RenderArgs, UpdateArgs};
+// use piston_window::Glyphs;
 
 use crate::types::*;
 
 pub struct App {
     gl: GlGraphics,
     state: State,
+    // glyphs: Glyphs,
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn new(// glyphs: Glyphs
+    ) -> Self {
         Self {
             gl: GlGraphics::new(OpenGL::V3_2),
             state: State::new(),
+            // glyphs: glyphs,
         }
     }
 
@@ -20,6 +24,7 @@ impl App {
         use graphics::*;
 
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
+        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
         const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
         const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 
@@ -68,6 +73,10 @@ impl App {
                     }
                 }
             }
+
+            // text(WHITE, 32, "Hello world!", &mut self.glyphs, c.transform.trans(10.0, 100.0), gl);
+            // // Update glyphs before rendering. -- why?
+            // glyphs.factory.encoder.flush(device);
         });
     }
 
