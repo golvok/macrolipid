@@ -2,6 +2,11 @@ use glutin_window::GlutinWindow;
 use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderEvent, UpdateEvent};
 use piston::window::WindowSettings;
+use piston::Button::Keyboard;
+use piston::ButtonEvent;
+use piston::EventLoop;
+
+use std::cmp::max;
 use std::sync::mpsc;
 use std::thread;
 
@@ -21,7 +26,7 @@ fn main() {
         for _ in 1..1000000 {
             e.tick();
             tpf += 1;
-            if tpf >= 10 {
+            if tpf >= 1 {
                 tx.send(e.current_state()).ok();
                 tpf = 0;
             } else {
@@ -34,8 +39,9 @@ fn main() {
 
     let mut app = app::App::new();
 
-    let mut events = Events::new(EventSettings::new());
+    let mut events = Events::new(EventSettings::new().max_fps(10));
     while let Some(e) = events.next(&mut window) {
+        let event_settings = events.get_event_settings();
         if let Some(args) = e.render_args() {
             app.render(&args);
         }
@@ -46,6 +52,16 @@ fn main() {
 
         if let Some(args) = e.update_args() {
             app.update(&args);
+        }
+
+        if let Some(args) = e.button_args() {
+            if let Keyboard(key) = args.button {
+                match key {
+                    piston::Key::LeftBracket => events.set_max_fps(max(event_settings.max_fps - 2, 1)),
+                    piston::Key::RightBracket => events.set_max_fps(event_settings.max_fps + 2),
+                    _ => (),
+                }
+            }
         }
     }
 }
