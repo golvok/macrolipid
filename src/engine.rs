@@ -19,7 +19,9 @@ impl Engine {
         Self {
             prev: initial_state.clone(),
             curr: initial_state,
-            rng: SmallRng::from_seed([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]),
+            rng: SmallRng::from_seed([
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+            ]),
             bounds: ((0., 0.).into(), (800., 800.).into()),
         }
     }
@@ -68,10 +70,10 @@ impl Engine {
 
             // random (~brownian) perturbations
             ext_force += Vector {
-                x: self.rng.gen_range(-1., 1.),
-                y: self.rng.gen_range(-1., 1.),
+                x: self.rng.gen_range(-1.0..1.0),
+                y: self.rng.gen_range(-1.0..1.0),
             } * 5.0;
-            torque += self.rng.gen_range(-1., 1.) * 0.5;
+            torque += self.rng.gen_range(-1.0..1.0) * 0.5;
 
             let head_tail_distance2 = l.head_position.distance2(l.tail_position);
             let head_tail_error2 = head_tail_distance2 - l.tail_length.powf(2.0);
