@@ -1,22 +1,20 @@
-use opengl_graphics::{GlGraphics, OpenGL};
+use opengl_graphics::{GlGraphics, GlyphCache, OpenGL, TextureSettings};
 use piston::input::{RenderArgs, UpdateArgs};
-// use piston_window::Glyphs;
 
 use crate::types::*;
 
-pub struct App {
+pub struct App<'a> {
     gl: GlGraphics,
     state: State,
-    // glyphs: Glyphs,
+    glyph_cache: GlyphCache<'a>,
 }
 
-impl App {
-    pub fn new(// glyphs: Glyphs
-    ) -> Self {
+impl App<'_> {
+    pub fn new() -> Self {
         Self {
             gl: GlGraphics::new(OpenGL::V3_2),
             state: State::new(),
-            // glyphs: glyphs,
+            glyph_cache: GlyphCache::new("/usr/share/fonts/TTF/DejaVuSans.ttf", (), TextureSettings::new()).unwrap(),
         }
     }
 
@@ -30,6 +28,7 @@ impl App {
 
         let (_xmax, _ymax) = (args.window_size[0], args.window_size[1]);
         let state = &self.state;
+        let glyph_cache = &mut self.glyph_cache;
 
         self.gl.draw(args.viewport(), |c, gl| {
             clear(BLACK, gl);
@@ -74,9 +73,15 @@ impl App {
                 }
             }
 
-            // text(WHITE, 32, "Hello world!", &mut self.glyphs, c.transform.trans(10.0, 100.0), gl);
-            // // Update glyphs before rendering. -- why?
-            // glyphs.factory.encoder.flush(device);
+            text::Text::new_color(WHITE, 32)
+                .draw(
+                    "Hello opengl_graphics!",
+                    glyph_cache,
+                    &DrawState::default(),
+                    c.transform.trans(0.0, 100.0),
+                    gl,
+                )
+                .unwrap();
         });
     }
 

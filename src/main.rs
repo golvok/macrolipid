@@ -1,11 +1,10 @@
-use piston::event_loop::EventLoop;
+use glutin_window::GlutinWindow;
 use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderEvent, UpdateEvent};
 use piston::window::WindowSettings;
 use piston::Button::Keyboard;
 use piston::ButtonEvent;
-use piston_window::PistonWindow;
-use piston_window::Transformed;
+use piston::EventLoop;
 
 use std::cmp::max;
 use std::sync::mpsc;
@@ -18,7 +17,7 @@ mod types;
 use types::*;
 
 fn main() {
-    let mut window: PistonWindow = WindowSettings::new("Macrolipid", [400, 400]).exit_on_esc(true).build().unwrap();
+    let mut window: GlutinWindow = WindowSettings::new("Macrolipid", [400, 400]).exit_on_esc(true).build().unwrap();
 
     let (tx, rx) = mpsc::sync_channel::<State>(1);
     thread::spawn(move || {
@@ -38,10 +37,6 @@ fn main() {
         }
     });
 
-    // let font_data: &[u8] = include_bytes!("/usr/share/fonts/TTF/DejaVuSans.ttf");
-    // let font: Font<'static> = Font::try_from_bytes(font_data).unwrap();
-
-    let mut glyphs = window.load_font("/usr/share/fonts/TTF/DejaVuSans.ttf").unwrap();
     let mut app = app::App::new();
 
     let mut events = Events::new(EventSettings::new().max_fps(10));
@@ -49,17 +44,6 @@ fn main() {
         let event_settings = events.get_event_settings();
         if let Some(args) = e.render_args() {
             app.render(&args);
-            window.draw_2d(&e, |c, gl, _dev| {
-                graphics::text(
-                    [1.0, 1.0, 1.0, 1.0],
-                    32,
-                    "Hello world!",
-                    &mut glyphs,
-                    c.transform.trans(10.0, 100.0),
-                    gl,
-                )
-                .expect("tried drawing text");
-            });
         }
 
         if let Ok(state) = rx.try_recv() {
