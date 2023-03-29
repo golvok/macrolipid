@@ -39,11 +39,12 @@ fn main() {
 
     let mut app = app::App::new();
 
-    let mut events = Events::new(EventSettings::new().max_fps(10));
-    while let Some(e) = events.next(&mut window) {
+    let mut old_fps = 2;
+    let mut events = Events::new(EventSettings::new().max_fps(2));
+    'main_loop: while let Some(e) = events.next(&mut window) {
         let event_settings = events.get_event_settings();
         if let Some(args) = e.render_args() {
-            app.render(&args);
+            app.render(&args, event_settings.max_fps);
         }
 
         if let Ok(state) = rx.try_recv() {
@@ -56,9 +57,17 @@ fn main() {
 
         if let Some(args) = e.button_args() {
             if let Keyboard(key) = args.button {
-                match key {
-                    piston::Key::LeftBracket => events.set_max_fps(max(event_settings.max_fps - 2, 1)),
-                    piston::Key::RightBracket => events.set_max_fps(event_settings.max_fps + 2),
+                use piston::ButtonState::*;
+                use piston::Key;
+                match (key, args.state) {
+                    (Key::Comma, Press) => events.set_max_fps(max(event_settings.max_fps, 4) - 2),
+                    (Key::Period, Press) => events.set_max_fps(event_settings.max_fps + 2),
+                    (Key::S, Press) => {
+                        old_fps = event_settings.max_fps;
+                        events.set_max_fps(40);
+                    }
+                    (Key::S, Release) => events.set_max_fps(old_fps),
+                    (Key::Q, Press) => break 'main_loop,
                     _ => (),
                 }
             }

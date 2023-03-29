@@ -18,7 +18,7 @@ impl App<'_> {
         }
     }
 
-    pub fn render(&mut self, args: &RenderArgs) {
+    pub fn render(&mut self, args: &RenderArgs, max_fps: u64) {
         use graphics::*;
 
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
@@ -66,19 +66,21 @@ impl App<'_> {
                         head_radius,
                         tail_length: _,
                     } => {
-                        let transform = c.transform.trans(head_position.x.into(), head_position.y.into());
+                        let transform = c
+                            .transform
+                            .trans((head_position.x * scale).into(), (head_position.y * scale).into());
                         let square = rectangle::square(0.0, 0.0, *head_radius as f64);
                         rectangle(RED, square, transform, gl);
                     }
                 }
             }
 
-            text::Text::new_color(WHITE, 32)
+            text::Text::new_color(WHITE, 16)
                 .draw(
-                    "Hello opengl_graphics!",
+                    &format!("Max FPS: {max_fps}"),
                     glyph_cache,
                     &DrawState::default(),
-                    c.transform.trans(0.0, 100.0),
+                    c.transform.trans(0.0, 16.0),
                     gl,
                 )
                 .unwrap();
