@@ -31,6 +31,9 @@ impl App<'_> {
         let glyph_cache = &mut self.glyph_cache;
 
         self.gl.draw(args.viewport(), |c, gl| {
+            let scale = 2.5;
+            let objects_transform = c.transform.scale(scale, scale);
+
             clear(BLACK, gl);
 
             for m in &state.lipids {
@@ -43,14 +46,14 @@ impl App<'_> {
                     } => {
                         line(
                             GREEN,
-                            1.0,
+                            1.0 / scale,
                             [
                                 head_position.x.into(),
                                 head_position.y.into(),
                                 tail_position.x.into(),
                                 tail_position.y.into(),
                             ],
-                            c.transform,
+                            objects_transform,
                             gl,
                         );
                     }
@@ -66,11 +69,8 @@ impl App<'_> {
                         head_radius,
                         tail_length: _,
                     } => {
-                        let transform = c
-                            .transform
-                            .trans((head_position.x * scale).into(), (head_position.y * scale).into());
-                        let square = rectangle::square(0.0, 0.0, *head_radius as f64);
-                        rectangle(RED, square, transform, gl);
+                        let square = rectangle::square(head_position.x.into(), head_position.y.into(), *head_radius as f64);
+                        rectangle(RED, square, objects_transform, gl);
                     }
                 }
             }
