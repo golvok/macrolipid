@@ -19,6 +19,7 @@ pub fn default() -> State {
                 tail_position: centre + offset_vec,
                 head_radius: 3.,
                 tail_length: tail_length,
+                tail_width: 3.,
             })
         }
     }

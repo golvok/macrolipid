@@ -11,6 +11,7 @@ pub struct Lipid {
     pub tail_position: Point2<f32>,
     pub head_radius: f32,
     pub tail_length: f32,
+    pub tail_width: f32,
 }
 
 #[derive(Debug, Clone)]

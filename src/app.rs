@@ -19,14 +19,9 @@ impl App<'_> {
     }
 
     pub fn render(&mut self, args: &RenderArgs, max_fps: u64) {
+        use graphics::color::*;
         use graphics::*;
 
-        const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
-        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
-        const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
-        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
-
-        let (_xmax, _ymax) = (args.window_size[0], args.window_size[1]);
         let state = &self.state;
         let glyph_cache = &mut self.glyph_cache;
 
@@ -36,22 +31,23 @@ impl App<'_> {
 
             clear(BLACK, gl);
 
-            for m in &state.lipids {
-                match m {
+            for (i_lipid, lipid) in state.lipids.iter().enumerate() {
+                match lipid {
                     Lipid {
                         head_position,
                         tail_position,
                         head_radius: _,
                         tail_length: _,
+                        tail_width,
                     } => {
                         line(
-                            GREEN,
-                            1.0 / scale,
+                            GREEN.shade(i_lipid as f32 / 1.5 / state.lipids.len() as f32),
+                            *tail_width as f64,
                             [
-                                head_position.x.into(),
-                                head_position.y.into(),
-                                tail_position.x.into(),
-                                tail_position.y.into(),
+                                head_position.x as f64,
+                                head_position.y as f64,
+                                tail_position.x as f64,
+                                tail_position.y as f64,
                             ],
                             objects_transform,
                             gl,
@@ -61,16 +57,27 @@ impl App<'_> {
             }
 
             // render heads after, since they are small
-            for m in &state.lipids {
-                match m {
+            for (i_lipid, lipid) in state.lipids.iter().enumerate() {
+                match lipid {
                     Lipid {
                         head_position,
                         tail_position: _,
                         head_radius,
                         tail_length: _,
+                        tail_width: _,
                     } => {
-                        let square = rectangle::square(head_position.x.into(), head_position.y.into(), *head_radius as f64);
-                        rectangle(RED, square, objects_transform, gl);
+                        let square = rectangle::centered([
+                            head_position.x as f64,
+                            head_position.y as f64,
+                            *head_radius as f64,
+                            *head_radius as f64,
+                        ]);
+                        rectangle(
+                            RED.shade(i_lipid as f32 / 1.5 / state.lipids.len() as f32),
+                            square,
+                            objects_transform,
+                            gl,
+                        );
                     }
                 }
             }
