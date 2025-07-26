@@ -17,7 +17,7 @@ mod types;
 use types::*;
 
 fn main() {
-    let mut window: GlutinWindow = WindowSettings::new("Macrolipid", [400, 400]).exit_on_esc(true).build().unwrap();
+    let mut window: GlutinWindow = WindowSettings::new("Macrolipid", [400, 400]).build().unwrap();
 
     let (tx, rx) = mpsc::sync_channel::<State>(1);
     thread::spawn(move || {
@@ -68,6 +68,7 @@ fn main() {
                     }
                     (Key::S, Release) => events.set_max_fps(old_fps),
                     (Key::Q, Press) => break 'main_loop,
+                    (Key::Escape, Press) => break 'main_loop,
                     _ => (),
                 }
             }

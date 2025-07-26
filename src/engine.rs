@@ -3,6 +3,7 @@ use cgmath::Basis2;
 use cgmath::Rad;
 use cgmath::Rotation;
 use cgmath::Rotation2;
+use std::time::Instant;
 
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
@@ -28,6 +29,7 @@ impl Engine {
 
     pub fn tick(&mut self) {
         self.prev = self.curr.clone();
+        let start_time = Instant::now();
         let time_step = 0.0005;
 
         for (ilipid, l) in self.curr.lipids.iter_mut().enumerate() {
@@ -104,6 +106,8 @@ impl Engine {
                 tail_width: l.tail_width,
             }
         }
+
+        self.curr.tick_time = Instant::now() - start_time;
     }
 
     pub fn current_state(&self) -> State {

@@ -3,9 +3,13 @@ use cgmath::Basis2;
 use cgmath::Rad;
 use cgmath::Rotation;
 use cgmath::Rotation2;
+use std::time::Duration;
 
 pub fn default() -> State {
-    let mut result = State { lipids: vec![] };
+    let mut result = State {
+        lipids: vec![],
+        tick_time: Duration::ZERO,
+    };
     for irow in 0..=1 {
         for icol in 0..200 {
             let centre = Point::new(100.0 + icol as f32 * 1.0, 100.0 + irow as f32 * 10.0 + (icol % 5) as f32 * 2.0);

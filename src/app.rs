@@ -1,5 +1,6 @@
 use opengl_graphics::{GlGraphics, GlyphCache, OpenGL, TextureSettings};
 use piston::input::{RenderArgs, UpdateArgs};
+use std::time::Duration;
 
 use crate::types::*;
 
@@ -82,12 +83,24 @@ impl App<'_> {
                 }
             }
 
+            let min_frame_time = Duration::new(0, (1_000_000_000.0 / max_fps as f64) as u32);
             text::Text::new_color(WHITE, 16)
                 .draw(
-                    &format!("Max FPS: {max_fps}"),
+                    &format!("Min. Frame Time: {min_frame_time:?}"),
                     glyph_cache,
                     &DrawState::default(),
                     c.transform.trans(0.0, 16.0),
+                    gl,
+                )
+                .unwrap();
+
+            let tick_time = state.tick_time;
+            text::Text::new_color(WHITE, 16)
+                .draw(
+                    &format!("Tick Time: {tick_time:?}"),
+                    glyph_cache,
+                    &DrawState::default(),
+                    c.transform.trans(0.0, 32.0),
                     gl,
                 )
                 .unwrap();
