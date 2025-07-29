@@ -22,25 +22,17 @@ fn main() {
     let (tx, rx) = mpsc::sync_channel::<State>(1);
     thread::spawn(move || {
         let mut e = engine::Engine::new(initialization::default());
-        let mut tpf = 0;
-        for _ in 1..1000000 {
+        loop {
             e.tick();
-            tpf += 1;
-            if tpf >= 1 {
-                tx.send(e.current_state()).ok();
-                tpf = 0;
-            } else {
-                if let Ok(_) = tx.try_send(e.current_state()) {
-                    tpf = 0;
-                }
-            }
+            tx.try_send(e.current_state()).ok();
+            // tx.send(e.current_state()).ok();
         }
     });
 
     let mut app = app::App::new();
 
-    let mut old_fps = 2;
-    let mut events = Events::new(EventSettings::new().max_fps(2));
+    let mut old_fps = 60;
+    let mut events = Events::new(EventSettings::new().max_fps(60));
     'main_loop: while let Some(e) = events.next(&mut window) {
         let event_settings = events.get_event_settings();
         if let Some(args) = e.render_args() {
@@ -64,7 +56,7 @@ fn main() {
                     (Key::Period, Press) => events.set_max_fps(event_settings.max_fps + 2),
                     (Key::S, Press) => {
                         old_fps = event_settings.max_fps;
-                        events.set_max_fps(40);
+                        events.set_max_fps(2);
                     }
                     (Key::S, Release) => events.set_max_fps(old_fps),
                     (Key::Q, Press) => break 'main_loop,
