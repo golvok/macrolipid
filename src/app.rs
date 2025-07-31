@@ -37,6 +37,8 @@ impl App<'_> {
                     Lipid {
                         head_position,
                         tail_position,
+                        linear_velocity: _,
+                        angular_velocity: _,
                         head_radius: _,
                         tail_length: _,
                         tail_width,
@@ -63,6 +65,8 @@ impl App<'_> {
                     Lipid {
                         head_position,
                         tail_position: _,
+                        linear_velocity: _,
+                        angular_velocity: _,
                         head_radius,
                         tail_length: _,
                         tail_width: _,

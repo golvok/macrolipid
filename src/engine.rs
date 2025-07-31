@@ -30,7 +30,7 @@ impl Engine {
     pub fn tick(&mut self) {
         self.prev = self.curr.clone();
         let start_time = Instant::now();
-        let time_step = 0.0005;
+        let time_step = 0.0001 as f32;
 
         // make head longer?
         // head-tail repulsion
@@ -44,8 +44,8 @@ impl Engine {
             let centre_of_mass = l.head_position + (l.tail_position - l.head_position) * 0.33;
             let mut torque: f32 = 0.0; // (CCW is positive)
 
-            let min_error2: f32 = (0.01 as f32).powf(2.0);
-            let max_dist2: f32 = (15.0 as f32).powf(2.0);
+            let min_error2: f32 = (1.0 as f32).powf(2.0);
+            let max_dist2: f32 = (15.0 as f32).powf(2.0); // try to make the forces only short-ranged, like surface tension is
             for (jlipid, jl) in self.prev.lipids.iter().enumerate() {
                 if jlipid == ilipid {
                     continue;
@@ -55,7 +55,7 @@ impl Engine {
                 let head_dist2 = jl.head_position.distance2(l.head_position);
                 let head_error2 = head_dist2 - (l.head_radius + jl.head_radius).powf(2.0);
                 if min_error2 < head_error2.abs() && head_dist2 < max_dist2 {
-                    let coeff = if head_error2 < 0.0 { -50.0 } else { 1.5 };
+                    let coeff = if head_error2 < 0.0 { -10.0 } else { 1.0 };
                     let force_here = coeff * (jl.head_position - l.head_position);
                     let offset = centre_of_mass - l.head_position;
                     ext_force += force_here;
@@ -65,13 +65,13 @@ impl Engine {
                 // multi-point attraction & repulsion from/to tails
                 let tail_points = [0.33, 0.67, 1.0];
 
-                // force on this head from the other tail points
+                // repulsion on this head from the other tail points
                 for tail_distance2 in tail_points.iter() {
                     let tpos_j = jl.head_position + (jl.tail_position - jl.head_position) * *tail_distance2;
                     let tail_tail_dist2 = tpos_j.distance2(l.head_position);
                     let tail_tail_error2 = tail_tail_dist2 - (l.head_radius + jl.tail_width / 2.0).powf(2.0);
                     if min_error2 < tail_tail_error2.abs() && tail_tail_dist2 < max_dist2 {
-                        let coeff = if tail_tail_error2 < 0.0 { -2.0 } else { -2.0 };
+                        let coeff = if tail_tail_error2 < 0.0 { -1.2 } else { -1.2 };
                         let force_here = coeff / tail_points.len() as f32 * (tpos_j - l.head_position);
                         let offset = centre_of_mass - l.head_position;
                         ext_force += force_here;
@@ -82,13 +82,13 @@ impl Engine {
                 for tail_distance1 in tail_points.iter() {
                     let tpos_i = l.head_position + (l.tail_position - l.head_position) * *tail_distance1;
 
-                    // force on this tail point from the other tail points
+                    // atraction and repulsion on this tail point from the other tail points
                     for tail_distance2 in tail_points.iter() {
                         let tpos_j = jl.head_position + (jl.tail_position - jl.head_position) * *tail_distance2;
                         let tail_tail_dist2 = tpos_j.distance2(tpos_i);
                         let tail_tail_error2 = tail_tail_dist2 - (l.tail_width / 2.0 + jl.tail_width / 2.0).powf(2.0);
                         if min_error2 < tail_tail_error2.abs() && tail_tail_dist2 < max_dist2 {
-                            let coeff = if tail_tail_error2 < 0.0 { -50.0 } else { 1.5 };
+                            let coeff = if tail_tail_error2 < 0.0 { -10.0 } else { 1.0 };
                             let force_here = coeff / tail_points.len() as f32 * (tpos_j - tpos_i);
                             let offset = centre_of_mass - tpos_i;
                             ext_force += force_here;
@@ -96,11 +96,11 @@ impl Engine {
                         }
                     }
 
-                    // repulsive force on this tail point from the other head
+                    // repulsion on this tail point from the other head
                     let head_tail_dist2 = jl.head_position.distance2(tpos_i);
                     let head_tail_error2 = head_tail_dist2 - (l.tail_width / 2.0 + jl.head_radius).powf(2.0);
                     if min_error2 < head_tail_error2.abs() && head_tail_dist2 < max_dist2 {
-                        let coeff = if head_tail_error2 < 0.0 { -2.0 } else { -2.0 };
+                        let coeff = if head_tail_error2 < 0.0 { -1.2 } else { -1.2 };
                         let force_here = coeff * (jl.head_position - tpos_i);
                         let offset = centre_of_mass - tpos_i;
                         ext_force += force_here;
@@ -113,8 +113,8 @@ impl Engine {
             ext_force += Vector {
                 x: self.rng.gen_range(-1.0..1.0),
                 y: self.rng.gen_range(-1.0..1.0),
-            } * 50.0;
-            torque += self.rng.gen_range(-1.0..1.0) * 0.5;
+            } * 10000.0;
+            torque += self.rng.gen_range(-1.0..1.0) * 100.0;
 
             // pull/push the head and tail of the same lipid together/apart if they are too far from the natural distance
             let head_tail_distance2 = l.head_position.distance2(l.tail_position);
@@ -130,12 +130,18 @@ impl Engine {
             let head_normal = make_ccw_normal.rotate_vector(centre_of_mass - l.head_position);
             let tail_normal = make_ccw_normal.rotate_vector(centre_of_mass - l.tail_position);
 
-            let head_force = head_normal * torque * 0.2 / 6.0 + ext_force + head_tail_attraction;
-            let tail_force = tail_normal * torque * 0.1 / 6.0 + ext_force - head_tail_attraction;
+            // F = m*a = m*Dv/Dt => Dv = (F/m)*Dt => v(t+Dt) = v(t) + (F/m)*Dt
+            let new_lin_vel = l.linear_velocity + ext_force * time_step;
+            let new_ang_vel = l.angular_velocity + torque * time_step;
+            let head_vel = head_normal * new_ang_vel * 0.2 / 6.0 + new_lin_vel + head_tail_attraction;
+            let tail_vel = tail_normal * new_ang_vel * 0.1 / 6.0 + new_lin_vel - head_tail_attraction;
 
             *l = Lipid {
-                head_position: apply_force(self.bounds, l.head_position, head_force * time_step),
-                tail_position: apply_force(self.bounds, l.tail_position, tail_force * time_step),
+                // Ds = v*Dt => s(t + Dt) = s(t) + v*Dt
+                head_position: apply_velocity(self.bounds, l.head_position, head_vel * time_step),
+                tail_position: apply_velocity(self.bounds, l.tail_position, tail_vel * time_step),
+                linear_velocity: l.linear_velocity * 0.995 + ext_force * time_step,
+                angular_velocity: l.angular_velocity * 0.995 + torque * time_step,
                 head_radius: l.head_radius,
                 tail_length: l.tail_length,
                 tail_width: l.tail_width,
@@ -150,8 +156,8 @@ impl Engine {
     }
 }
 
-pub fn apply_force(bounds: (Point, Point), p: Point, f: Vector) -> Point {
-    let proposed = p + f;
+pub fn apply_velocity(bounds: (Point, Point), p: Point, v: Vector) -> Point {
+    let proposed = p + v;
     if proposed.x > bounds.1.x || proposed.y > bounds.1.y || proposed.x < bounds.0.x || proposed.y < bounds.0.y {
         p
     } else {

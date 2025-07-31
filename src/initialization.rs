@@ -21,6 +21,8 @@ pub fn default() -> State {
             result.lipids.push(Lipid {
                 head_position: centre - offset_vec,
                 tail_position: centre + offset_vec,
+                linear_velocity: Vector2::new(0.0, 0.0),
+                angular_velocity: 0.0,
                 head_radius: 3.,
                 tail_length: tail_length,
                 tail_width: 3.,
