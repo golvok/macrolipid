@@ -23,7 +23,7 @@ pub fn default() -> State {
                 tail_position: centre + offset_vec,
                 linear_velocity: Vector2::new(0.0, 0.0),
                 angular_velocity: 0.0,
-                head_radius: 3.,
+                head_radius: 2.,
                 tail_length: tail_length,
                 tail_width: 3.,
             })

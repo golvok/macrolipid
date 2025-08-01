@@ -31,6 +31,11 @@ impl Engine {
         self.prev = self.curr.clone();
         let start_time = Instant::now();
         let time_step = 0.0001 as f32;
+        let center_frac = 0.33 as f32; // fraction for the distance from head to the center of mass
+        let first_moment = 30.0 as f32;
+        let friction_loss_frac = 0.995;
+        let min_error2: f32 = (0.5 as f32).powf(2.0);
+        let max_dist2: f32 = (11.0 as f32).powf(2.0); // try to make the forces only short-ranged, like surface tension is
 
         // make head longer?
         // simulate water. bilayers do not form without water IRL
@@ -40,11 +45,9 @@ impl Engine {
 
         for (ilipid, l) in self.curr.lipids.iter_mut().enumerate() {
             let mut ext_force = Vector { x: 0., y: 0. };
-            let centre_of_mass = l.head_position + (l.tail_position - l.head_position) * 0.33;
+            let centre_of_mass = l.head_position + (l.tail_position - l.head_position) * center_frac;
             let mut ext_torque: f32 = 0.0; // (CCW is positive)
 
-            let min_error2: f32 = (1.0 as f32).powf(2.0);
-            let max_dist2: f32 = (15.0 as f32).powf(2.0); // try to make the forces only short-ranged, like surface tension is
             for (jlipid, jl) in self.prev.lipids.iter().enumerate() {
                 if jlipid == ilipid {
                     continue;
@@ -54,7 +57,7 @@ impl Engine {
                 let head_dist2 = jl.head_position.distance2(l.head_position);
                 let head_error2 = head_dist2 - (l.head_radius + jl.head_radius).powf(2.0);
                 if min_error2 < head_error2.abs() && head_dist2 < max_dist2 {
-                    let coeff = if head_error2 < 0.0 { -10.0 } else { 1.0 };
+                    let coeff = if head_error2 < 0.0 { -100.0 } else { 1.0 };
                     let force_here = coeff * (jl.head_position - l.head_position);
                     let offset = centre_of_mass - l.head_position;
                     ext_force += force_here;
@@ -71,7 +74,7 @@ impl Engine {
                     let tail_tail_dist2 = tpos_j.distance2(l.head_position);
                     let tail_tail_error2 = tail_tail_dist2 - (l.head_radius + jl.tail_width / 2.0).powf(2.0);
                     if min_error2 < tail_tail_error2.abs() && tail_tail_dist2 < max_dist2 {
-                        let coeff = if tail_tail_error2 < 0.0 { -1.2 } else { -1.2 };
+                        let coeff = if tail_tail_error2 < 0.0 { -2.0 } else { -2.0 };
                         let force_here = coeff / num_tail_points_f * (tpos_j - l.head_position);
                         let offset = centre_of_mass - l.head_position;
                         ext_force += force_here;
@@ -88,7 +91,7 @@ impl Engine {
                         let tail_tail_dist2 = tpos_j.distance2(tpos_i);
                         let tail_tail_error2 = tail_tail_dist2 - (l.tail_width / 2.0 + jl.tail_width / 2.0).powf(2.0);
                         if min_error2 < tail_tail_error2.abs() && tail_tail_dist2 < max_dist2 {
-                            let coeff = if tail_tail_error2 < 0.0 { -30.0 } else { 3.0 };
+                            let coeff = if tail_tail_error2 < 0.0 { -150.0 } else { 2.0 };
                             let force_here = coeff / num_tail_points_f.powf(2.0) * (tpos_j - tpos_i);
                             let offset = centre_of_mass - tpos_i;
                             ext_force += force_here;
@@ -100,7 +103,7 @@ impl Engine {
                     let head_tail_dist2 = jl.head_position.distance2(tpos_i);
                     let head_tail_error2 = head_tail_dist2 - (l.tail_width / 2.0 + jl.head_radius).powf(2.0);
                     if min_error2 < head_tail_error2.abs() && head_tail_dist2 < max_dist2 {
-                        let coeff = if head_tail_error2 < 0.0 { -3.0 } else { -3.0 };
+                        let coeff = if head_tail_error2 < 0.0 { -2.0 } else { -2.0 };
                         let force_here = coeff / num_tail_points_f * (jl.head_position - tpos_i);
                         let offset = centre_of_mass - tpos_i;
                         ext_force += force_here;
@@ -133,15 +136,16 @@ impl Engine {
             // F = m*a = m*Dv/Dt => Dv = (F/m)*Dt => v(t+Dt) = v(t) + (F/m)*Dt
             let new_lin_vel = l.linear_velocity + ext_force * time_step;
             let new_ang_vel = l.angular_velocity + ext_torque * time_step;
-            let head_vel = head_normal * new_ang_vel * 2.0 / 3.0 + new_lin_vel + head_tail_attraction;
-            let tail_vel = tail_normal * new_ang_vel * 1.0 / 3.0 + new_lin_vel - head_tail_attraction;
+            let head_vel = head_normal * new_ang_vel * l.tail_length * center_frac / first_moment + new_lin_vel + head_tail_attraction;
+            let tail_vel =
+                tail_normal * new_ang_vel * l.tail_length * (1.0 - center_frac) / first_moment + new_lin_vel - head_tail_attraction;
 
             *l = Lipid {
                 // Ds = v*Dt => s(t + Dt) = s(t) + v*Dt
                 head_position: apply_velocity(self.bounds, l.head_position, head_vel * time_step),
                 tail_position: apply_velocity(self.bounds, l.tail_position, tail_vel * time_step),
-                linear_velocity: l.linear_velocity * 0.995 + ext_force * time_step,
-                angular_velocity: l.angular_velocity * 0.995 + ext_torque * time_step,
+                linear_velocity: l.linear_velocity * friction_loss_frac + ext_force * time_step,
+                angular_velocity: l.angular_velocity * friction_loss_frac + ext_torque * time_step,
                 head_radius: l.head_radius,
                 tail_length: l.tail_length,
                 tail_width: l.tail_width,
