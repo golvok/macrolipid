@@ -33,7 +33,6 @@ impl Engine {
         let time_step = 0.0001 as f32;
 
         // make head longer?
-        // head-tail repulsion
         // simulate water. bilayers do not form without water IRL
         //   for each grid cell, start with 0, and accumulate/remove water for each nearby head/tail
         //     do sgn(x)*sqrt(abs(x)) or something to mimic effect of pessure?
@@ -64,6 +63,7 @@ impl Engine {
 
                 // multi-point attraction & repulsion from/to tails
                 let tail_points = [0.33, 0.67, 1.0];
+                let num_tail_points_f = tail_points.len() as f32;
 
                 // repulsion on this head from the other tail points
                 for tail_distance2 in tail_points.iter() {
@@ -72,7 +72,7 @@ impl Engine {
                     let tail_tail_error2 = tail_tail_dist2 - (l.head_radius + jl.tail_width / 2.0).powf(2.0);
                     if min_error2 < tail_tail_error2.abs() && tail_tail_dist2 < max_dist2 {
                         let coeff = if tail_tail_error2 < 0.0 { -1.2 } else { -1.2 };
-                        let force_here = coeff / tail_points.len() as f32 * (tpos_j - l.head_position);
+                        let force_here = coeff / num_tail_points_f * (tpos_j - l.head_position);
                         let offset = centre_of_mass - l.head_position;
                         ext_force += force_here;
                         ext_torque += offset.x * force_here.y - offset.y * force_here.x;
@@ -88,8 +88,8 @@ impl Engine {
                         let tail_tail_dist2 = tpos_j.distance2(tpos_i);
                         let tail_tail_error2 = tail_tail_dist2 - (l.tail_width / 2.0 + jl.tail_width / 2.0).powf(2.0);
                         if min_error2 < tail_tail_error2.abs() && tail_tail_dist2 < max_dist2 {
-                            let coeff = if tail_tail_error2 < 0.0 { -10.0 } else { 1.0 };
-                            let force_here = coeff / tail_points.len() as f32 * (tpos_j - tpos_i);
+                            let coeff = if tail_tail_error2 < 0.0 { -30.0 } else { 3.0 };
+                            let force_here = coeff / num_tail_points_f.powf(2.0) * (tpos_j - tpos_i);
                             let offset = centre_of_mass - tpos_i;
                             ext_force += force_here;
                             ext_torque += offset.x * force_here.y - offset.y * force_here.x;
@@ -100,8 +100,8 @@ impl Engine {
                     let head_tail_dist2 = jl.head_position.distance2(tpos_i);
                     let head_tail_error2 = head_tail_dist2 - (l.tail_width / 2.0 + jl.head_radius).powf(2.0);
                     if min_error2 < head_tail_error2.abs() && head_tail_dist2 < max_dist2 {
-                        let coeff = if head_tail_error2 < 0.0 { -1.2 } else { -1.2 };
-                        let force_here = coeff * (jl.head_position - tpos_i);
+                        let coeff = if head_tail_error2 < 0.0 { -3.0 } else { -3.0 };
+                        let force_here = coeff / num_tail_points_f * (jl.head_position - tpos_i);
                         let offset = centre_of_mass - tpos_i;
                         ext_force += force_here;
                         ext_torque += offset.x + force_here.y - offset.y * force_here.x;
@@ -133,8 +133,8 @@ impl Engine {
             // F = m*a = m*Dv/Dt => Dv = (F/m)*Dt => v(t+Dt) = v(t) + (F/m)*Dt
             let new_lin_vel = l.linear_velocity + ext_force * time_step;
             let new_ang_vel = l.angular_velocity + ext_torque * time_step;
-            let head_vel = head_normal * new_ang_vel * 0.2 / 6.0 + new_lin_vel + head_tail_attraction;
-            let tail_vel = tail_normal * new_ang_vel * 0.1 / 6.0 + new_lin_vel - head_tail_attraction;
+            let head_vel = head_normal * new_ang_vel * 2.0 / 3.0 + new_lin_vel + head_tail_attraction;
+            let tail_vel = tail_normal * new_ang_vel * 1.0 / 3.0 + new_lin_vel - head_tail_attraction;
 
             *l = Lipid {
                 // Ds = v*Dt => s(t + Dt) = s(t) + v*Dt
