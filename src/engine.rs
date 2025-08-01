@@ -42,7 +42,7 @@ impl Engine {
         for (ilipid, l) in self.curr.lipids.iter_mut().enumerate() {
             let mut ext_force = Vector { x: 0., y: 0. };
             let centre_of_mass = l.head_position + (l.tail_position - l.head_position) * 0.33;
-            let mut torque: f32 = 0.0; // (CCW is positive)
+            let mut ext_torque: f32 = 0.0; // (CCW is positive)
 
             let min_error2: f32 = (1.0 as f32).powf(2.0);
             let max_dist2: f32 = (15.0 as f32).powf(2.0); // try to make the forces only short-ranged, like surface tension is
@@ -59,7 +59,7 @@ impl Engine {
                     let force_here = coeff * (jl.head_position - l.head_position);
                     let offset = centre_of_mass - l.head_position;
                     ext_force += force_here;
-                    torque += offset.x * force_here.y - offset.y * force_here.x;
+                    ext_torque += offset.x * force_here.y - offset.y * force_here.x;
                 }
 
                 // multi-point attraction & repulsion from/to tails
@@ -75,7 +75,7 @@ impl Engine {
                         let force_here = coeff / tail_points.len() as f32 * (tpos_j - l.head_position);
                         let offset = centre_of_mass - l.head_position;
                         ext_force += force_here;
-                        torque += offset.x * force_here.y - offset.y * force_here.x;
+                        ext_torque += offset.x * force_here.y - offset.y * force_here.x;
                     }
                 }
 
@@ -92,7 +92,7 @@ impl Engine {
                             let force_here = coeff / tail_points.len() as f32 * (tpos_j - tpos_i);
                             let offset = centre_of_mass - tpos_i;
                             ext_force += force_here;
-                            torque += offset.x * force_here.y - offset.y * force_here.x;
+                            ext_torque += offset.x * force_here.y - offset.y * force_here.x;
                         }
                     }
 
@@ -104,7 +104,7 @@ impl Engine {
                         let force_here = coeff * (jl.head_position - tpos_i);
                         let offset = centre_of_mass - tpos_i;
                         ext_force += force_here;
-                        torque += offset.x + force_here.y - offset.y * force_here.x;
+                        ext_torque += offset.x + force_here.y - offset.y * force_here.x;
                     }
                 }
             }
@@ -114,7 +114,7 @@ impl Engine {
                 x: self.rng.gen_range(-1.0..1.0),
                 y: self.rng.gen_range(-1.0..1.0),
             } * 10000.0;
-            torque += self.rng.gen_range(-1.0..1.0) * 100.0;
+            ext_torque += self.rng.gen_range(-1.0..1.0) * 100.0;
 
             // pull/push the head and tail of the same lipid together/apart if they are too far from the natural distance
             let head_tail_distance2 = l.head_position.distance2(l.tail_position);
@@ -132,7 +132,7 @@ impl Engine {
 
             // F = m*a = m*Dv/Dt => Dv = (F/m)*Dt => v(t+Dt) = v(t) + (F/m)*Dt
             let new_lin_vel = l.linear_velocity + ext_force * time_step;
-            let new_ang_vel = l.angular_velocity + torque * time_step;
+            let new_ang_vel = l.angular_velocity + ext_torque * time_step;
             let head_vel = head_normal * new_ang_vel * 0.2 / 6.0 + new_lin_vel + head_tail_attraction;
             let tail_vel = tail_normal * new_ang_vel * 0.1 / 6.0 + new_lin_vel - head_tail_attraction;
 
@@ -141,7 +141,7 @@ impl Engine {
                 head_position: apply_velocity(self.bounds, l.head_position, head_vel * time_step),
                 tail_position: apply_velocity(self.bounds, l.tail_position, tail_vel * time_step),
                 linear_velocity: l.linear_velocity * 0.995 + ext_force * time_step,
-                angular_velocity: l.angular_velocity * 0.995 + torque * time_step,
+                angular_velocity: l.angular_velocity * 0.995 + ext_torque * time_step,
                 head_radius: l.head_radius,
                 tail_length: l.tail_length,
                 tail_width: l.tail_width,
