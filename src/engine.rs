@@ -114,10 +114,10 @@ impl Engine {
 
             // random (~brownian) perturbations
             ext_force += Vector {
-                x: self.rng.random_range(-1.0..1.0),
-                y: self.rng.random_range(-1.0..1.0),
+                x: self.rng.gen_range(-1.0..1.0),
+                y: self.rng.gen_range(-1.0..1.0),
             } * 10000.0;
-            ext_torque += self.rng.random_range(-1.0..1.0) * 100.0;
+            ext_torque += self.rng.gen_range(-1.0..1.0) * 100.0;
 
             // pull/push the head and tail of the same lipid together/apart if they are too far from the natural distance
             let head_tail_distance2 = l.head_position.distance2(l.tail_position);
