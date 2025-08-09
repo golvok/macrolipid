@@ -6,11 +6,12 @@ edition = "2018"
 
 [dependencies]
 cgmath = "0.18.0"
-ndarray = "0.15.6"
-piston = "0.53.2"
-piston2d-graphics = "0.43.0"
-piston2d-opengl_graphics = "0.82.0"
-pistoncore-glutin_window = "0.71.0"
+image = "0.25.6"
+ndarray = "0.16.1"
+piston = "1.0.0"
+piston2d-graphics = "0.45.0"
+piston2d-opengl_graphics = "0.89.0"
+pistoncore-glutin_window = "0.72.0"
 [dependencies.rand]
-version = "0.8"
+version = "0.9"
 features = ["small_rng"]
