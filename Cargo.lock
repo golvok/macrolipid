@@ -667,6 +667,7 @@ name = "macrolipid"
 version = "0.1.0"
 dependencies = [
  "cgmath",
+ "image",
  "ndarray",
  "piston",
  "piston2d-graphics",

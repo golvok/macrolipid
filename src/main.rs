@@ -1,4 +1,5 @@
 use glutin_window::GlutinWindow;
+use opengl_graphics::OpenGL;
 use piston::event_loop::{EventSettings, Events};
 use piston::input::{RenderEvent, UpdateEvent};
 use piston::window::WindowSettings;
@@ -17,7 +18,10 @@ mod types;
 use types::*;
 
 fn main() {
-    let mut window: GlutinWindow = WindowSettings::new("Macrolipid", [400, 400]).build().unwrap();
+    let mut window: GlutinWindow = WindowSettings::new("Macrolipid", [400, 400])
+        .graphics_api(OpenGL::V4_2)
+        .build()
+        .unwrap();
 
     let (tx, rx) = mpsc::sync_channel::<State>(1);
     thread::spawn(move || {

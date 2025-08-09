@@ -1,4 +1,5 @@
-use opengl_graphics::{GlGraphics, GlyphCache, OpenGL, TextureSettings};
+use image::RgbaImage;
+use opengl_graphics::{GlGraphics, GlyphCache, OpenGL, Texture, TextureSettings};
 use piston::input::{RenderArgs, UpdateArgs};
 use std::time::Duration;
 
@@ -8,14 +9,23 @@ pub struct App<'a> {
     gl: GlGraphics,
     state: State,
     glyph_cache: GlyphCache<'a>,
+    debug_texture0: Texture,
 }
 
 impl App<'_> {
     pub fn new() -> Self {
         Self {
-            gl: GlGraphics::new(OpenGL::V3_2),
+            gl: GlGraphics::new(OpenGL::V4_2),
             state: State::new(),
             glyph_cache: GlyphCache::new("/usr/share/fonts/TTF/DejaVuSans.ttf", (), TextureSettings::new()).unwrap(),
+            debug_texture0: opengl_graphics::CreateTexture::create(
+                &mut (),
+                opengl_graphics::Format::Rgba8,
+                &[0u8; 400 * 400 * 4],
+                [400, 400],
+                &TextureSettings::new(),
+            )
+            .unwrap(),
         }
     }
 
@@ -25,12 +35,19 @@ impl App<'_> {
 
         let state = &self.state;
         let glyph_cache = &mut self.glyph_cache;
+        let debug_texture0 = &mut self.debug_texture0;
+
+        let mut img = RgbaImage::new(400, 400);
+        img.put_pixel(0, 0, ::image::Rgba::<u8>([0, 255, 0, 255]));
+        img.put_pixel(100, 100, ::image::Rgba::<u8>([255, 0, 0, 255]));
+        debug_texture0.update(&img);
 
         self.gl.draw(args.viewport(), |c, gl| {
             let scale = 2.5;
             let objects_transform = c.transform.scale(scale, scale);
 
             clear(BLACK, gl);
+            ::graphics::image(debug_texture0, objects_transform, gl);
 
             for (i_lipid, lipid) in state.lipids.iter().enumerate() {
                 match lipid {
