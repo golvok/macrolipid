@@ -21,6 +21,7 @@ pub struct Lipid {
 pub struct State {
     pub lipids: Vec<Lipid>,
     pub tick_time: Duration,
+    pub debug_array0: ndarray::Array3<u8>,
 }
 
 impl State {
@@ -28,6 +29,7 @@ impl State {
         Self {
             lipids: vec![],
             tick_time: Duration::ZERO,
+            debug_array0: ndarray::Array3::zeros((400, 400, 4)),
         }
     }
 }

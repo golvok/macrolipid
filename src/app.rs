@@ -1,4 +1,3 @@
-use image::RgbaImage;
 use opengl_graphics::{GlGraphics, GlyphCache, OpenGL, Texture, TextureSettings};
 use piston::input::{RenderArgs, UpdateArgs};
 use std::time::Duration;
@@ -37,10 +36,15 @@ impl App<'_> {
         let glyph_cache = &mut self.glyph_cache;
         let debug_texture0 = &mut self.debug_texture0;
 
-        let mut img = RgbaImage::new(400, 400);
-        img.put_pixel(0, 0, ::image::Rgba::<u8>([0, 255, 0, 255]));
-        img.put_pixel(100, 100, ::image::Rgba::<u8>([255, 0, 0, 255]));
-        debug_texture0.update(&img);
+        ::opengl_graphics::UpdateTexture::update(
+            debug_texture0,
+            &mut (),
+            ::opengl_graphics::Format::Rgba8,
+            state.debug_array0.as_slice().unwrap(),
+            [0, 0],
+            [400, 400],
+        )
+        .unwrap();
 
         self.gl.draw(args.viewport(), |c, gl| {
             let scale = 2.5;
@@ -61,7 +65,9 @@ impl App<'_> {
                         tail_width,
                     } => {
                         line(
-                            GREEN.shade(i_lipid as f32 / 1.5 / state.lipids.len() as f32),
+                            GREEN
+                                .shade(i_lipid as f32 / 1.5 / state.lipids.len() as f32)
+                                .mul_rgba(1.0, 1.0, 1.0, 0.5),
                             *tail_width as f64,
                             [
                                 head_position.x as f64,
@@ -95,7 +101,8 @@ impl App<'_> {
                             *head_radius as f64,
                         ]);
                         rectangle(
-                            RED.shade(i_lipid as f32 / 1.5 / state.lipids.len() as f32),
+                            RED.shade(i_lipid as f32 / 1.5 / state.lipids.len() as f32)
+                                .mul_rgba(1.0, 1.0, 1.0, 0.5),
                             square,
                             objects_transform,
                             gl,
@@ -105,7 +112,7 @@ impl App<'_> {
             }
 
             let min_frame_time = Duration::new(0, (1_000_000_000.0 / max_fps as f64) as u32);
-            text::Text::new_color(WHITE, 16)
+            text::Text::new_color(WHITE.mul_rgba(1.0, 1.0, 1.0, 0.4), 16)
                 .draw(
                     &format!("Min. Frame Time: {min_frame_time:?}"),
                     glyph_cache,
@@ -116,7 +123,7 @@ impl App<'_> {
                 .unwrap();
 
             let tick_time = state.tick_time;
-            text::Text::new_color(WHITE, 16)
+            text::Text::new_color(WHITE.mul_rgba(1.0, 1.0, 1.0, 0.4), 16)
                 .draw(
                     &format!("Tick Time: {tick_time:?}"),
                     glyph_cache,
